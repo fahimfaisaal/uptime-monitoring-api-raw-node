@@ -1,0 +1,16 @@
+{
+  "name": "uptime-monitoring-api-raw-node",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "start": "NODE_ENV=development nodemon index.js",
+    "production": "NODE_ENV=production nodemon index.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "nodemon": "^2.0.10"
+  }
+}
