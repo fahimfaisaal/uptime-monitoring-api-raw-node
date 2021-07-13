@@ -13,7 +13,7 @@ exports.handleReqRes = (req, res) => {
     const path = parseUrl.pathname;
     const trimmedPath = path.replace(/^\/+|\/+$/g, '') || '/';
     const queryStringObject = parseUrl.query;
-    const reqMethod = req.method.toLowerCase();
+    const method = req.method.toLowerCase();
     
     // request object
     const handleRequestObject = {
@@ -21,7 +21,7 @@ exports.handleReqRes = (req, res) => {
         queryStringObject,
         path,
         trimmedPath,
-        reqMethod
+        method
     }
 
     // choose handler by req routes
@@ -40,10 +40,13 @@ exports.handleReqRes = (req, res) => {
 
         // Invoked the chosen handler
         chosenHandler(handleRequestObject, (statusCode = 500, response = {}) => {
-            res.writeHead(statusCode);
-            res.end(JSON.stringify(response));
-        })
+            const jsonResponse = JSON.stringify(response);
 
-        return res.end(template);
+            res.setHeader('Content-Type', 'application/json');
+            
+            res.writeHead(statusCode);
+            
+            return res.end(jsonResponse);
+        })
     })
 }
