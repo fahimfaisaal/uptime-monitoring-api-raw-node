@@ -4,12 +4,17 @@
 * Author: @fahimfaisaal
 */
 
-const { isFunction } = require('../lib/util');
+const { isFunction, hash, isValidUser } = require('../lib/util');
+const { createDir, createFile } = require('../lib/crud');
 
-exports.userHandler = (requestProperties, callback) => {
+const user = {};
+
+user.storageDir = 'users'
+
+user.userHandler = (requestProperties, callback) => {
     const reqMethod = requestProperties.method;
     // check the request method
-    const acceptedMethod = exports.methods[reqMethod];
+    const acceptedMethod = user.methods[reqMethod];
     callback = isFunction(callback) ? callback : null;
 
     if (acceptedMethod) {        
@@ -19,20 +24,45 @@ exports.userHandler = (requestProperties, callback) => {
     return callback(405, {message: `${reqMethod} method not allowed`});
 }
 
-exports.methods = {};
+user.methods = {};
 
-exports.methods.get = (requestProperties, callback) => {
-    
-}
-
-exports.methods.post = (requestProperties, callback) => {
+user.methods.get = (requestProperties, callback) => {
 
 }
 
-exports.methods.put = (requestProperties, callback) => {
+user.methods.post = ({ body }, callback) => {
+    // if user's data are valid
+    if (isValidUser(body)) {
+       const userObject = {
+            ...body,
+            password: hash(body.password)
+        }
+
+        return createDir(user.storageDir, message => {
+            return createFile(user.storageDir, userObject.phone, userObject, (err, res) => {
+                const response = {
+                    fileMessage: err ? err.message : res,
+                    dirMessage: message
+                }
+
+                if (err) {
+                    return callback(500, response);
+                }
+
+                return callback(200, response)
+            });
+        });
+    }
+
+    return callback(405, {message: "user not valid!"})
+}
+
+user.methods.put = (requestProperties, callback) => {
 
 }
 
-exports.methods.delete = (requestProperties, callback) => {
+user.methods.delete = (requestProperties, callback) => {
 
 }
+
+module.exports = user
