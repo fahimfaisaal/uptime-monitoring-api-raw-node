@@ -1,6 +1,7 @@
 const url = require('url');
 const { StringDecoder } = require('string_decoder');
 const routes = require('../routes');
+const { jsonParser, hash } = require('../lib/util');
 
 // handle request and response
 exports.handleReqRes = (req, res) => {
@@ -38,14 +39,16 @@ exports.handleReqRes = (req, res) => {
     req.on('end', () => {
         textContent += decoder.end();
 
+        handleRequestObject.body = jsonParser(textContent);
+
         // Invoked the chosen handler
         chosenHandler(handleRequestObject, (statusCode = 500, response = {}) => {
             const jsonResponse = JSON.stringify(response);
 
+            
             res.setHeader('Content-Type', 'application/json');
-            
             res.writeHead(statusCode);
-            
+
             return res.end(jsonResponse);
         })
     })

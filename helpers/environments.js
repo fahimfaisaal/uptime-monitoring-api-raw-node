@@ -10,12 +10,14 @@ const environment = {};
 // development modes
 environment.development = {
     mode: 'development',
-    port: 3000
+    port: 3000,
+    secretKey: 'aertvfdsgehgbsawetjmsg'
 };
 
 environment.production = {
     mode: 'production',
-    port: 5000
+    port: 5000,
+    secretKey: 'sdfastndjkasfdkdnfkjas',
 }
 
 // chose the environment mode by environment variables
