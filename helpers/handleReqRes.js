@@ -1,14 +1,12 @@
 const url = require('url');
 const { StringDecoder } = require('string_decoder');
+
+// relative dependencies
 const routes = require('../routes');
-const { jsonParser, hash } = require('../lib/util');
+const { jsonParser } = require('../lib/util');
 
 // handle request and response
 exports.handleReqRes = (req, res) => {
-    const template = `
-    <h1>Bismillah</h1>
-    `;
-
     // Handle Request
     const parseUrl = url.parse(req.url, true);
     const path = parseUrl.pathname;
