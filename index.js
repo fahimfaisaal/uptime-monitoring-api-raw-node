@@ -6,6 +6,8 @@
 
 //* Dependencies
 const http = require('http');
+
+// relative dependencies
 const { handleReqRes } = require('./helpers/handleReqRes');
 const environment = require('./helpers/environments');
 
@@ -17,7 +19,7 @@ app.createServer = () => {
 
     // run the server
     server.listen(environment.port, () => {
-        console.log(`Server is running on port: ${environment.port}; environment mode: ${environment.mode}`);
+        console.log(`Server is running on -> http://localhost:${environment.port}\nenvironment mode: ${environment.mode}`);
     })
 }
 
