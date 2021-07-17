@@ -29,30 +29,23 @@ user.userHandler = (requestProperties, callback) => {
 
 user.methods = {};
 
-user.methods.get = ({ trimPath, queryStringObject }, callback) => {
+user.methods.get = ({ queryStringObject }, callback) => {
     const queryStringLen = Object.keys(queryStringObject).length;
-    const validUserNumberRegex = /(user\/)(\d{6,11})/;
-    const paramsNumber = validUserNumberRegex.test(trimPath)
-        ? trimPath.replace(validUserNumberRegex, '$2')
-        : '';
-    
     let userPath;
 
     // if get user by phone number
-    if (
-        (queryStringLen && 'number' in queryStringObject) || paramsNumber
-    ) {
-        const userNumber = queryStringObject.number || paramsNumber;
+    if (queryStringLen && 'number' in queryStringObject) {
+        const userNumber = queryStringObject.number;
         userPath = path.resolve('.data', user.storageDir , userNumber + '.json');
 
-        return fs.access(userPath, constants.F_OK, err => {
+        return fs.access(userPath, err => {
             if (err) {
                 return callback(405, { message: `${userNumber} is not exist!` });
             }
 
             return readFile(user.storageDir, userNumber, (readErr, userData) => {
                 if (readErr) {
-                    return callback(405, readErr);
+                    return callback(500, readErr);
                 }
 
                 return callback(200, userData);
@@ -62,20 +55,43 @@ user.methods.get = ({ trimPath, queryStringObject }, callback) => {
 
     userPath = path.resolve('.data', user.storageDir);
 
+    // read the .data directory
     fs.readdir(userPath, 'utf-8', (err, files) => {
         if (err) {
             return callback(405, err.message);
         }
         
-        files.reduce((userJson, userFile) => {
-            readFile(user.storageDir, path.basename(userFile, '.json'), (err, user) => {
-                if (!err) {
-                   userJson.push(user);
-                }
+        // resolve all users
+        const resolveUsers = files.reduce((usersArray, userFile) => {
+            const basename = path.basename(userFile, '.json');
+            
+            // resolving one by one user by using Promise
+            const resolveUser = new Promise((resolve, reject) => {
+                readFile(user.storageDir, basename, (err, userObject) => {
+                    if (!err) {
+                        return resolve(userObject);
+                    }
+
+                   return reject(err.message);
+                });
             });
 
-            return userJson;
-        }, [])
+            // push the resolveUser
+            usersArray.push(resolveUser);
+            
+            return usersArray;
+        }, []);
+
+        // response all users
+        const getAllUsers = Promise.all(resolveUsers);
+
+        getAllUsers
+            .then(users => {
+                callback(200, users);
+            })
+            .catch(err => {
+                callback(500, err);
+            });
     })
 }
 
@@ -107,7 +123,7 @@ user.methods.post = ({ body }, callback) => {
     }
 
     //  if user's data not valid
-    return callback(405, {message: "user not valid!"})
+    return callback(405, { message: "user not valid!" });
 }
 
 user.methods.put = ({ body, queryStringObject }, callback) => {
