@@ -1,3 +1,4 @@
+// module dependencies
 const url = require('url');
 const { StringDecoder } = require('string_decoder');
 
@@ -37,13 +38,13 @@ exports.handleReqRes = (req, res) => {
     req.on('end', () => {
         textContent += decoder.end();
 
+        // parse textContent Json to object
         handleRequestObject.body = jsonParser(textContent);
 
         // Invoked the chosen handler
         chosenHandler(handleRequestObject, (statusCode = 500, response = {}) => {
             const jsonResponse = JSON.stringify(response);
 
-            
             res.setHeader('Content-Type', 'application/json');
             res.writeHead(statusCode);
 
