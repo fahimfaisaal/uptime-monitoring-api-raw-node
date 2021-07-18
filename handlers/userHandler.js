@@ -3,15 +3,24 @@
 * Description: handle GET, POST, PUT, DELETE methods
 * Author: @fahimfaisaal
 */
+
+// module dependencies
 const fs = require('fs');
 const path = require('path');
 
 // relative dependencies
 const { isFunction, hash, isValidUser } = require('../lib/util');
-const { createDir, createFile, readFile, updateFile, deleteFile } = require('../lib/crud');
+const {
+    createDir,
+    createFile,
+    readFile,
+    updateFile,
+    deleteFile
+} = require('../lib/crud');
 
 const user = {};
 
+// storage directory name
 user.storageDir = 'users'
 
 user.userHandler = (requestProperties, callback) => {
@@ -20,22 +29,24 @@ user.userHandler = (requestProperties, callback) => {
     const acceptedMethod = user.methods[reqMethod];
     callback = isFunction(callback) ? callback : null;
 
-    if (acceptedMethod) {        
+    if (acceptedMethod) {
         return acceptedMethod(requestProperties, callback);
     }
 
     return callback(405, {message: `${reqMethod} method not allowed`});
 }
 
+// user methods object
 user.methods = {};
 
+// TODO: Authentication check
 user.methods.get = ({ queryStringObject }, callback) => {
     const queryStringLen = Object.keys(queryStringObject).length;
     let userPath;
 
     // if get user by phone number
-    if (queryStringLen && 'number' in queryStringObject) {
-        const userNumber = queryStringObject.number;
+    if (queryStringLen && 'phone' in queryStringObject) {
+        const userNumber = queryStringObject.phone;
         userPath = path.resolve('.data', user.storageDir , userNumber + '.json');
 
         return fs.access(userPath, err => {
@@ -64,7 +75,7 @@ user.methods.get = ({ queryStringObject }, callback) => {
         // resolve all users
         const resolveUsers = files.reduce((usersArray, userFile) => {
             const basename = path.basename(userFile, '.json');
-            
+
             // resolving one by one user by using Promise
             const resolveUser = new Promise((resolve, reject) => {
                 readFile(user.storageDir, basename, (err, userObject) => {
@@ -101,8 +112,8 @@ user.methods.post = ({ body }, callback) => {
        const userObject = {
             ...body,
             password: hash(body.password)
-        }
-
+       }
+        
         // if user directory not exist it'll be create
         return createDir(user.storageDir, message => {
             return createFile(user.storageDir, userObject.phone, userObject, (err, res) => {
@@ -126,38 +137,75 @@ user.methods.post = ({ body }, callback) => {
     return callback(405, { message: "user not valid!" });
 }
 
-user.methods.put = ({ body, queryStringObject }, callback) => {
+// TODO: Authentication check
+user.methods.put = ({ body, queryStringObject, method }, callback) => {
     // if user is valid
-    if (isValidUser(body)) {
-        const newData = JSON.parse(body);
+    const number = body.phone || queryStringObject.phone;
+    const userPath = path.resolve('.data', user.storageDir, number + '.json');
 
-        return updateFile(user.storageDir, queryStringObject.number, newData, (err, res) => {
-            // if have any type of error
+    if (number) {
+       return fs.access(userPath, err => {
             if (err) {
-                return callback(405, err.message);
+                return createFile(user.storageDir, number, body, (err, res) => {
+                    if (err) {
+                        return callback(405, { message: err });
+                    }
+
+                    return callback(200, { message: res + ' cause it didn\'t there.' });
+                })
             }
 
-            return callback(200, res);
+            return updateFile(user.storageDir, number, body, method, (err, res) => {
+                // if have any type of error
+                if (err) {
+                    return callback(500, { message: err })
+                }
+
+                return callback(200, { message: res })
+            })
+        })
+    }
+ 
+    return callback(405, { message: "user not valid!" });
+}
+
+// TODO: Authentication check
+user.methods.patch = ({ body, queryStringObject, method }, callback) => {
+    // if user is valid
+    const number = body.phone || queryStringObject.phone;
+
+    if (number) {
+        return updateFile(user.storageDir, number, body, method, (err, res) => {
+            // if have any type of error
+            if (err) {
+                return callback(500, { message: err.message });
+            }
+
+            return callback(200, { message: res });
         })
     }
 
     return callback(405, { message: "user not valid!" });
 }
 
+// TODO: Authentication check
 user.methods.delete = ({ body, queryStringObject }, callback) => {
+    const number = body.phone || queryStringObject.phone
     // if user is valid
-    if (isValidUser(body)) {
-        return deleteFile(user.storageDir, queryStringObject.number, (err, res) => {
+
+    if (number) {
+       return deleteFile(user.storageDir, number, (err, res) => {
             // if have any type of error
             if (err) {
-                return callback(405, err.message);
+                return callback(405, { message: "number not valid!" });
             }
 
             return callback(200, res);
         })
     }
 
-    return callback(405, { message: "user not valid!" });
+    callback(405, { message: "please enter a number."})
+    
 }
 
 module.exports = user
