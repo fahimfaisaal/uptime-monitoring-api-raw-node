@@ -4,15 +4,17 @@
 * Author: @fahimfaisaal
 */
 
-// dependencies
-const handlers = require('./handlers/routeHandler');
+// relative dependencies
+const { rootHandler, notFoundHandler } = require('./handlers/routeHandler');
 const { userHandler } = require('./handlers/userHandler');
+const { tokenHandler } = require('./handlers/tokenHandler');
 
 // All routes object
 const routes = {
-    '/': handlers.rootHandler,
+    '/': rootHandler,
     user: userHandler,
-    notFound: handlers.notFoundHandler
+    token: tokenHandler,
+    notFound: notFoundHandler
 };
 
 module.exports = routes;
