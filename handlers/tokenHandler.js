@@ -60,7 +60,7 @@ token.methods.post = ({ body }, callback) => {
         return readFile(storageDir, phone, (err, userData) => {
             if (!err) {
                 if (userData.password === password) {
-                    const tokenId = tokenGenerator(20);
+                    const tokenId = tokenGenerator('mid');
                     const expires = Date.now() + 60 * 60 * 1000;
                     const tokenObject = {
                         phone,
@@ -125,7 +125,6 @@ token.methods.get = ({ queryStringObject, body }, callback) => {
     return callback(405, { message: 'Please input user id.'})
 }
 
-// TODO: Authentication check
 token.methods.put = ({ body, queryStringObject, method }, callback) => {
     // if token is valid
     const number = body.phone || queryStringObject.phone;
@@ -157,7 +156,6 @@ token.methods.put = ({ body, queryStringObject, method }, callback) => {
     return callback(405, { message: "token not valid!" });
 }
 
-// TODO: Authentication check
 token.methods.patch = ({ body, queryStringObject, method }, callback) => {
     // if token is valid
     const number = body.phone || queryStringObject.phone;
@@ -176,7 +174,6 @@ token.methods.patch = ({ body, queryStringObject, method }, callback) => {
     return callback(405, { message: "token not valid!" });
 }
 
-// TODO: Authentication check
 token.methods.delete = ({ body, queryStringObject }, callback) => {
     const number = body.phone || queryStringObject.phone
     // if token is valid
