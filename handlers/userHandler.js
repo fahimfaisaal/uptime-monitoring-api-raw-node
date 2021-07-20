@@ -39,14 +39,48 @@ user.userHandler = (requestProperties, callback) => {
 // user methods object
 user.methods = {};
 
-// TODO: Authentication check
-user.methods.get = ({ queryStringObject }, callback) => {
+user.methods.post = ({ body }, callback) => {
+    // if user's data are valid
+    if (isValidUser(body)) {
+        const userObject = {
+            ...body,
+            password: hash(body.password)
+        }
+
+        // if user directory not exist it'll be create
+        return createDir(user.storageDir, message => {
+            return createFile(user.storageDir, userObject.phone, userObject, (err, res) => {
+                // create response object
+                const response = {
+                    fileMessage: err ? err.message : res,
+                    dirMessage: message
+                }
+
+                if (err) {
+                    // error response
+                    return callback(500, response);
+                }
+
+                return callback(200, response);
+            });
+        });
+    }
+
+    //  if user's data not valid
+    return callback(405, { message: "user not valid!" });
+}
+
+
+user.methods.get = ({ queryStringObject, body }, callback) => {
     const queryStringLen = Object.keys(queryStringObject).length;
     let userPath;
 
     // if get user by phone number
-    if (queryStringLen && 'phone' in queryStringObject) {
-        const userNumber = queryStringObject.phone;
+    if (
+        (queryStringLen && 'phone' in queryStringObject) ||
+        'phone' in body
+    ) {
+        const userNumber = queryStringObject.phone || body.phone;
         userPath = path.resolve('.data', user.storageDir , userNumber + '.json');
 
         return fs.access(userPath, err => {
@@ -59,7 +93,13 @@ user.methods.get = ({ queryStringObject }, callback) => {
                     return callback(500, readErr);
                 }
 
-                return callback(200, userData);
+                const { name, phone, email } = userData
+
+                return callback(200, {
+                    name,
+                    phone,
+                    email
+                });
             })
         })
     }
@@ -80,7 +120,14 @@ user.methods.get = ({ queryStringObject }, callback) => {
             const resolveUser = new Promise((resolve, reject) => {
                 readFile(user.storageDir, basename, (err, userObject) => {
                     if (!err) {
-                        return resolve(userObject);
+                        const { name, email, phone } = userObject;
+
+                        // get users except password
+                        return resolve({
+                            name,
+                            email,
+                            phone
+                        });
                     }
 
                    return reject(err.message);
@@ -106,38 +153,7 @@ user.methods.get = ({ queryStringObject }, callback) => {
     })
 }
 
-user.methods.post = ({ body }, callback) => {
-    // if user's data are valid
-    if (isValidUser(body)) {
-       const userObject = {
-            ...body,
-            password: hash(body.password)
-       }
-        
-        // if user directory not exist it'll be create
-        return createDir(user.storageDir, message => {
-            return createFile(user.storageDir, userObject.phone, userObject, (err, res) => {
-                // create response object
-                const response = {
-                    fileMessage: err ? err.message : res,
-                    dirMessage: message
-                }
 
-                if (err) {
-                    // error response
-                    return callback(500, response);
-                }
-
-                return callback(200, response);
-            });
-        });
-    }
-
-    //  if user's data not valid
-    return callback(405, { message: "user not valid!" });
-}
-
-// TODO: Authentication check
 user.methods.put = ({ body, queryStringObject, method }, callback) => {
     // if user is valid
     const number = body.phone || queryStringObject.phone;
@@ -188,7 +204,6 @@ user.methods.patch = ({ body, queryStringObject, method }, callback) => {
     return callback(405, { message: "user not valid!" });
 }
 
-// TODO: Authentication check
 user.methods.delete = ({ body, queryStringObject }, callback) => {
     const number = body.phone || queryStringObject.phone
     // if user is valid
