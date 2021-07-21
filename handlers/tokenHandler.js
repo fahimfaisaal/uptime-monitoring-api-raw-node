@@ -45,6 +45,13 @@ token.tokenHandler = (requestProperties, callback) => {
 // token methods object
 token.methods = {};
 
+/**
+ * Post token method
+ * @param {object} requestObject - distract only body
+ * @callback responseCallback
+ * @param {number} statusCode
+ * @param {object} response
+ */
 token.methods.post = ({ body }, callback) => {
     // if token's data are valid
     if (isValidToken(body)) {
@@ -95,6 +102,13 @@ token.methods.post = ({ body }, callback) => {
     return callback(405, { message: "token object not valid!" });
 }
 
+/**
+ * Get token method
+ * @param {Object} requestObject - distract body and queryString
+ * @callback responseCallback
+ * @param {number} statusCode
+ * @param {object} response
+ */
 token.methods.get = ({ queryStringObject, body }, callback) => {
     const queryStringLen = Object.keys(queryStringObject).length;
     let userPath;
@@ -107,6 +121,7 @@ token.methods.get = ({ queryStringObject, body }, callback) => {
         const userId = queryStringObject.id || body.id;
         userPath = path.resolve('.data', token.storageDir, userId + '.json');
 
+        // check is file is exists or not
         return fs.access(userPath, err => {
             if (err) {
                 return callback(405, { message: `${userId} is not exist!` });
