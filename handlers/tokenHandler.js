@@ -104,7 +104,7 @@ token.methods.post = ({ body }, callback) => {
 
 /**
  * Get token method
- * @param {Object} requestObject - distract body and queryString
+ * @param {object} requestObject - distract body and queryString
  * @callback responseCallback
  * @param {number} statusCode
  * @param {object} response
@@ -140,6 +140,13 @@ token.methods.get = ({ queryStringObject, body }, callback) => {
     return callback(405, { message: 'Please input user id.'})
 }
 
+/**
+ * Put token method
+ * @param {object} requestObject - distract body, queryString and method
+ * @callback responseCallback
+ * @param {number} statusCode
+ * @param {object} response
+ */
 token.methods.put = ({ body, queryStringObject, method }, callback) => {
     // if token is valid
     const number = body.phone || queryStringObject.phone;
@@ -171,6 +178,13 @@ token.methods.put = ({ body, queryStringObject, method }, callback) => {
     return callback(405, { message: "token not valid!" });
 }
 
+/**
+ * Patch token method
+ * @param {object} requestObject - distract body, queryString and method
+ * @callback responseCallback
+ * @param {number} statusCode
+ * @param {object} response
+ */
 token.methods.patch = ({ body, queryStringObject, method }, callback) => {
     // if token is valid
     const number = body.phone || queryStringObject.phone;
@@ -189,6 +203,13 @@ token.methods.patch = ({ body, queryStringObject, method }, callback) => {
     return callback(405, { message: "token not valid!" });
 }
 
+/**
+ * delete token method
+ * @param {object} requestObject - distract body and queryString
+ * @callback responseCallback
+ * @param {number} statusCode
+ * @param {object} response
+ */
 token.methods.delete = ({ body, queryStringObject }, callback) => {
     const number = body.phone || queryStringObject.phone
     // if token is valid
