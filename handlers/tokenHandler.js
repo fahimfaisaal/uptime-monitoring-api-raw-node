@@ -67,16 +67,16 @@ token.methods.post = ({ body }, callback) => {
         return readFile(storageDir, phone, (err, userData) => {
             if (!err) {
                 if (userData.password === password) {
-                    const tokenId = tokenGenerator('mid');
+                    const id = tokenGenerator('mid');
                     const expires = Date.now() + 60 * 60 * 1000;
                     const tokenObject = {
                         phone,
-                        tokenId,
+                        id,
                         expires
                     }
 
                     return createDir(token.storageDir, message => {
-                        return createFile(token.storageDir, tokenId, tokenObject, (err, res) => {
+                        return createFile(token.storageDir, id, tokenObject, (err, res) => {
                             const response = {
                                 fileMessage: err ? err.message : res,
                                 dirMessage: message
@@ -229,4 +229,30 @@ token.methods.delete = ({ body, queryStringObject }, callback) => {
 
 }
 
+
+/**
+ * User Authentication
+ * @param {string} requestId 
+ * @param {string} requestPhone 
+ * @callback isVerified
+ * @returns boolean
+ */
+token.methods.verify = (requestId, requestPhone, callback) => {
+    return readFile(token.storageDir, requestId, (err, tokenData) => {
+        if (err) {
+            return callback(false);
+        }
+
+        const { phone: tokenPhone, expires: tokenExpires } = tokenData;
+        
+        if (
+            tokenPhone === requestPhone &&
+            tokenExpires > Date.now()
+        ) {
+            return callback(true);
+        }
+
+        return callback(false);
+    })
+}
 module.exports = token
