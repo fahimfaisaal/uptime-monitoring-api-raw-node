@@ -14,6 +14,7 @@ exports.handleReqRes = (req, res) => {
     const trimmedPath = path.replace(/^\/+|\/+$/g, '') || '/';
     const queryStringObject = parseUrl.query;
     const method = req.method.toLowerCase();
+    const headerObject = req.headers;
     
     // request object
     const handleRequestObject = {
@@ -21,7 +22,8 @@ exports.handleReqRes = (req, res) => {
         queryStringObject,
         path,
         trimmedPath,
-        method
+        method,
+        headerObject
     }
 
     // choose handler by req routes
