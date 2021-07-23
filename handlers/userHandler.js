@@ -18,6 +18,8 @@ const {
     deleteFile
 } = require('../lib/crud');
 
+const tokenHandler = require('./tokenHandler');
+
 const user = {};
 
 // storage directory name
@@ -39,6 +41,7 @@ user.userHandler = (requestProperties, callback) => {
 // user methods object
 user.methods = {};
 
+// TODO: Authentication check
 user.methods.post = ({ body }, callback) => {
     // if user's data are valid
     if (isValidUser(body)) {
@@ -70,8 +73,7 @@ user.methods.post = ({ body }, callback) => {
     return callback(405, { message: "user not valid!" });
 }
 
-
-user.methods.get = ({ queryStringObject, body }, callback) => {
+user.methods.get = ({ queryStringObject, body, headerObject }, callback) => {
     const queryStringLen = Object.keys(queryStringObject).length;
     let userPath;
 
@@ -93,13 +95,16 @@ user.methods.get = ({ queryStringObject, body }, callback) => {
                     return callback(500, readErr);
                 }
 
-                const { name, phone, email } = userData
+                // check authentication
+               return tokenHandler.methods.verify(headerObject.token, userNumber, isVerified => {
+                    if (isVerified) {
+                        return callback(200, userData)
+                    }
 
-                return callback(200, {
-                    name,
-                    phone,
-                    email
-                });
+                    return callback(403, {
+                        message: 'user not verified!'
+                    });
+                })
             })
         })
     }
@@ -125,8 +130,7 @@ user.methods.get = ({ queryStringObject, body }, callback) => {
                         // get users except password
                         return resolve({
                             name,
-                            email,
-                            phone
+                            email
                         });
                     }
 
@@ -153,7 +157,7 @@ user.methods.get = ({ queryStringObject, body }, callback) => {
     })
 }
 
-
+// TODO: Authentication check
 user.methods.put = ({ body, queryStringObject, method }, callback) => {
     // if user is valid
     const number = body.phone || queryStringObject.phone;
@@ -204,6 +208,7 @@ user.methods.patch = ({ body, queryStringObject, method }, callback) => {
     return callback(405, { message: "user not valid!" });
 }
 
+// TODO: Authentication check
 user.methods.delete = ({ body, queryStringObject }, callback) => {
     const number = body.phone || queryStringObject.phone
     // if user is valid
