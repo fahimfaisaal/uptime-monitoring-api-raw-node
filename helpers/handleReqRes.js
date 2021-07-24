@@ -44,7 +44,7 @@ exports.handleReqRes = (req, res) => {
         handleRequestObject.body = jsonParser(textContent);
 
         // Invoked the chosen handler
-        chosenHandler(handleRequestObject, (statusCode = 500, response = {}) => {
+        chosenHandler(handleRequestObject, (statusCode = 500, response = { message: 'nothing response 😶'}) => {
             const jsonResponse = JSON.stringify(response);
 
             res.setHeader('Content-Type', 'application/json');
