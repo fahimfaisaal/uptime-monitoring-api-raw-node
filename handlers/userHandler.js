@@ -18,7 +18,8 @@ const {
     deleteFile
 } = require('../lib/crud');
 
-const tokenHandler = require('./tokenHandler');
+// Authentication function/method
+const { methods: { verifyUser } } = require('./tokenHandler');
 
 const user = {};
 
@@ -41,7 +42,6 @@ user.userHandler = (requestProperties, callback) => {
 // user methods object
 user.methods = {};
 
-// TODO: Authentication check
 user.methods.post = ({ body }, callback) => {
     // if user's data are valid
     if (isValidUser(body)) {
@@ -73,7 +73,12 @@ user.methods.post = ({ body }, callback) => {
     return callback(405, { message: "user not valid!" });
 }
 
-user.methods.get = ({ queryStringObject, body, headerObject }, callback) => {
+user.methods.get = (reqObject, callback) => {
+    const {
+        queryStringObject,
+        body,
+        headerObject: { token }
+    } = reqObject;
     const queryStringLen = Object.keys(queryStringObject).length;
     let userPath;
 
@@ -96,7 +101,7 @@ user.methods.get = ({ queryStringObject, body, headerObject }, callback) => {
                 }
 
                 // check authentication
-               return tokenHandler.methods.verify(headerObject.token, userNumber, isVerified => {
+                return verifyUser(token, userNumber, isVerified => {
                     if (isVerified) {
                         return callback(200, userData)
                     }
@@ -157,75 +162,110 @@ user.methods.get = ({ queryStringObject, body, headerObject }, callback) => {
     })
 }
 
-// TODO: Authentication check
-user.methods.put = ({ body, queryStringObject, method }, callback) => {
+user.methods.put = (reqObject, callback) => {
+    const {
+        body,
+        queryStringObject,
+        method,
+        headerObject: { token }
+    } = reqObject;
     // if user is valid
     const number = body.phone || queryStringObject.phone;
     const userPath = path.resolve('.data', user.storageDir, number + '.json');
 
     if (number) {
-       return fs.access(userPath, err => {
-            if (err) {
-                return createFile(user.storageDir, number, body, (err, res) => {
-                    if (err) {
-                        return callback(405, { message: err });
-                    }
-
-                    return callback(200, { message: res + ' cause it didn\'t there.' });
-                })
+        // verify the user
+        return verifyUser(token, number, isVerified => {
+            if (!isVerified) {
+                return callback(403, { message: 'user not verified!' });                
             }
 
-            return updateFile(user.storageDir, number, body, method, (err, res) => {
-                // if have any type of error
+            return fs.access(userPath, err => {
                 if (err) {
-                    return callback(500, { message: err })
+                    return createFile(user.storageDir, number, body, (err, res) => {
+                        if (err) {
+                            return callback(405, { message: err });
+                        }
+
+                        return callback(200, { message: res + ' cause it didn\'t there.' });
+                    })
                 }
 
-                return callback(200, { message: res })
+                return updateFile(user.storageDir, number, body, method, (err, res) => {
+                    // if have any type of error
+                    if (err) {
+                        return callback(500, { message: err })
+                    }
+
+                    return callback(200, { message: res })
+                })
             })
+
         })
     }
  
     return callback(405, { message: "user not valid!" });
 }
 
-// TODO: Authentication check
-user.methods.patch = ({ body, queryStringObject, method }, callback) => {
+user.methods.patch = (reqObject, callback) => {
+    const {
+        body,
+        queryStringObject,
+        method,
+        headerObject: { token }
+    } = reqObject;
     // if user is valid
     const number = body.phone || queryStringObject.phone;
 
     if (number) {
-        return updateFile(user.storageDir, number, body, method, (err, res) => {
-            // if have any type of error
-            if (err) {
-                return callback(500, { message: err.message });
+        // verify the user
+        return verifyUser(token, number, isVerified => {
+            if (!isVerified) {
+                return callback(403, { message: 'user not verified!' });
             }
 
-            return callback(200, { message: res });
+            return updateFile(user.storageDir, number, body, method, (err, res) => {
+                // if have any type of error
+                if (err) {
+                    return callback(500, { message: err.message });
+                }
+
+                return callback(200, { message: res });
+            })
         })
     }
 
     return callback(405, { message: "user not valid!" });
 }
 
-// TODO: Authentication check
-user.methods.delete = ({ body, queryStringObject }, callback) => {
+user.methods.delete = (reqObject, callback) => {
+    const {
+        body,
+        queryStringObject,
+        headerObject: { token }
+    } = reqObject;
     const number = body.phone || queryStringObject.phone
     // if user is valid
 
     if (number) {
-       return deleteFile(user.storageDir, number, (err, res) => {
-            // if have any type of error
-            if (err) {
-                return callback(405, { message: "number not valid!" });
+        // check user verification
+        return verifyUser(token, number, isVerified => {
+            if (!isVerified) {
+                return callback(403, { message: "user not verified!" });
             }
 
-            return callback(200, res);
+            return deleteFile(user.storageDir, number, (err, res) => {
+                // if have any type of error
+                if (err) {
+                    return callback(405, { message: "number not valid!" });
+                }
+
+                return callback(200, res);
+            })
         })
     }
 
-    callback(405, { message: "please enter a number."})
-    
+    return callback(405, { message: "please enter a number." });
 }
 
-module.exports = user
+module.exports = user;
