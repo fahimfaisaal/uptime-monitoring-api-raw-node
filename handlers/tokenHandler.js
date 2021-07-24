@@ -235,9 +235,9 @@ token.methods.delete = ({ body, queryStringObject }, callback) => {
  * @param {string} requestId 
  * @param {string} requestPhone 
  * @callback isVerified
- * @returns boolean
+ * @returns {boolean}
  */
-token.methods.verify = (requestId, requestPhone, callback) => {
+token.methods.verifyUser = (requestId, requestPhone, callback) => {
     return readFile(token.storageDir, requestId, (err, tokenData) => {
         if (err) {
             return callback(false);
