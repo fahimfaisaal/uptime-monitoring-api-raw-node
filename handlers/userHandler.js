@@ -130,7 +130,7 @@ user.methods.get = (reqObject, callback) => {
             const resolveUser = new Promise((resolve, reject) => {
                 readFile(user.storageDir, basename, (err, userObject) => {
                     if (!err) {
-                        const { name, email, phone } = userObject;
+                        const { name, email } = userObject;
 
                         // get users except password
                         return resolve({
